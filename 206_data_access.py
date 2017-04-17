@@ -17,12 +17,17 @@
 # Put all import statements you need here.
 
 from bs4 import BeautifulSoup
+import codecs
 import collections
 import json
 import re
 import requests
 import sqlite3
+import sys
 import unittest
+
+# From Piazza -- combats codec errors for Windows.
+sys.stdout = codecs.getwriter('utf8')(sys.stdout.buffer)
 
 # Begin filling in instructions....
 
@@ -99,7 +104,7 @@ def build_park_directory():
 			raw_parks = park_data.find_all("h3")
 			raw_entries = [park.find("a") for park in raw_parks]
 			raw_urls = [entry["href"] for entry in raw_entries]
-			found_urls = ["https://www.nps.gov" + raw + "index.htm" for raw in raw_urls]
+			found_urls = ["https://www.nps.gov" + raw for raw in raw_urls]
 
 			# Add the list of found urls to the overarching list of park urls.
 			all_parks.append(found_urls)
@@ -126,59 +131,70 @@ class NationalPark():
 		# Recreating all of this information every time the program is run would take forever,
 		# so caching is used as it was before (large cache file, but more reasonable requests.)
 		dict_key = url + "_data"
-		'''
-		if dict_key in CACHE_DICTION:
-			self.name = CACHE_DICTION[dict_key][n]
-			self.park_type = CACHE_DICTION[dict_key][pt]
-			self.states = CACHE_DICTION[dict_key][s]
-			self.address = CACHE_DICTION[dict_key][a]
-			self.phone = CACHE_DICTION[dict_key][ph]
-			self.planning = CACHE_DICTION[dict_key][pl]
-		else:
-		'''
-		#print(url)
 		
-		# As before, scrape the supplied url.
-		np_request = requests.get(url).text
-		np_soup = BeautifulSoup(np_request, "html.parser")
+		if dict_key in CACHE_DICTION:
+			self.name = CACHE_DICTION[dict_key]["n"]
+			self.park_type = CACHE_DICTION[dict_key]["pt"]
+			self.states = CACHE_DICTION[dict_key]["s"]
+			self.address = CACHE_DICTION[dict_key]["a"]
+			self.phone = CACHE_DICTION[dict_key]["ph"]
+			self.planning = CACHE_DICTION[dict_key]["pl"]
+			self.has_phone = CACHE_DICTION[dict_key]["hf"]
+		else:
 
-		# One specific div contains info on the name, park type, and state.
-		# Not all parks have all three, so this may be incomplete at times.
-		np_ntl = np_soup.find("div", {"class" : "Hero-titleContainer clearfix"})
-		self.name = np_ntl.find("a", {"class" : "Hero-title"}).text
-		self.park_type = np_ntl.find("span", {"class" : "Hero-designation"}).text
-		self.states = np_ntl.find("span", {"class" : "Hero-location"}).text
+			# As before, scrape the supplied url.
+			np_request = requests.get(url+ "index.htm").text
+			np_soup = BeautifulSoup(np_request, "html.parser")
 
-		# Another div has both the address and phone number.
-		np_ap = np_soup.find("div", {"class" : "ParkFooter-contact"})
-		try:
-			self.address = np_ap.find("div", {"itemprop" : "address"}).text.replace('\n', ' ').strip()
-		except:
-			self.address = self.states
-		try:
-			self.phone = np_ap.find("span", {"itemprop" : "telephone"}).text.replace('\n', ' ').strip()
-			self.has_phone = True
-		except:
-			self.phone = "(Phone Unavailable)"
-			self.has_phone = False
+			# One specific div contains info on the name, park type, and state.
+			# Not all parks have all three, so this may be incomplete at times.
+			np_ntl = np_soup.find("div", {"class" : "Hero-titleContainer clearfix"})
+			try:
+				self.name = np_ntl.find("a", {"class" : "Hero-title"}).text
+			except:
+				# If the name can’t be found, there isn’t enough info to go on.
+				pass
+			try:
+				self.park_type = np_ntl.find("span", {"class" : "Hero-designation"}).text
+			except:
+				self.park_type = "national park"
 
-		# Different parks have varying levels of information for safety/accomodations.
-		# This program is currently just saving the text on the "plan your visit" page.
-		# This page contains an overview of the accomodations and warnings, if any exist.
-		extra_request = requests.get(url + "planyourvisit/index.htm").text
-		extra_soup = BeautifulSoup(extra_request, "html.parser")
-		try:
-			self.planning = np_ntl.find("div", {"class" : "Component text-content-size text-content-style ArticleTextGroup clearfix"}).text
-		except:
-			self.planning = "There are currently no posted warnings or accomodations, but you can contact the site for more information!"
-	'''
+			try:
+				self.states = np_ntl.find("span", {"class" : "Hero-location"}).text
+			except:
+				self.states = "the United States"
+
+			# Another div has both the address and phone number.
+			np_ap = np_soup.find("div", {"class" : "ParkFooter-contact"})
+			try:
+				self.address = np_ap.find("div", {"itemprop" : "address"}).text.replace('\n', ' ').strip()
+			except:
+				self.address = self.states
+			try:
+				self.phone = np_ap.find("span", {"itemprop" : "telephone"}).text.replace('\n', ' ').strip()
+				self.has_phone = True
+			except:
+				self.phone = "(Phone Unavailable)"
+				self.has_phone = False
+
+			# Different parks have varying levels of information for safety/accomodations.
+			# This program is currently just saving the text on the "plan your visit" page.
+			# This page contains an overview of the accomodations and warnings, if any exist.
+			extra_request = requests.get(url + "planyourvisit/index.htm").text
+			extra_soup = BeautifulSoup(extra_request, "html.parser")
+			try:
+				#print(extra_soup).text
+				self.planning = extra_soup.find("div", {"class" : "Component text-content-size text-content-style ArticleTextGroup clearfix"}).text.replace('\n\n', '\n').strip()
+			except:
+				self.planning = "There are currently no posted warnings or accomodations, but you can contact the site for more information!"
+	
 			# Cache the information as a dictionary of variables.
-			self.full_dict = {"n" : self.name, "pt" : self.park_type, "s" : self.states, "a" : self.address, "ph" : self.phone, "pl" : self.planning}
+			self.full_dict = {"n" : self.name, "pt" : self.park_type, "s" : self.states, "a" : self.address, "ph" : self.phone, "pl" : self.planning, "hf" : self.has_phone}
 			CACHE_DICTION[dict_key] = self.full_dict
 			f = open(CACHE_FILENAME, "w")
 			f.write(json.dumps(CACHE_DICTION))
 			f.close()
-	'''
+	
 	def __str__(self):
 		to_print = self.name + " is a " + self.park_type + " located in the following states: " + self.states + "\n\n"
 		to_print += "They are located at " + self.address 
@@ -188,6 +204,7 @@ class NationalPark():
 			to_print += ", but do not have a phone number listed.\n\n"
 		to_print += "Here is some important information about " + self.name + ":\n" + self.planning + "\n\n"
 		to_print += "----------------------------------------"
+		to_print.encode("utf-8")
 		return to_print
 
 # Create a list of NationalPark objects.
