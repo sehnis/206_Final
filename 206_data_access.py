@@ -82,7 +82,7 @@ def build_park_directory():
 	# A list of url lists is needed to return all of the information produced by this function.
 	all_parks = []
 
-	if"cached_parks" in CACHE_DICTION:
+	if "cached_parks" in CACHE_DICTION:
 		print("Using cached data for the parks...")
 		all_parks = CACHE_DICTION["cached_parks"]
 	else:
@@ -119,28 +119,97 @@ def build_park_directory():
 	# At this point, using BeautifulSoup on the park urls gets us all the information we need for the individual parks.
 	# Adding them directly to an __init__ function is the most efficient, so the NationalPark object is declared now.
 
+class NationalPark():
+
+	def __init__(self, url):
+
+		# Recreating all of this information every time the program is run would take forever,
+		# so caching is used as it was before (large cache file, but more reasonable requests.)
+		dict_key = url + "_data"
+		'''
+		if dict_key in CACHE_DICTION:
+			self.name = CACHE_DICTION[dict_key][n]
+			self.park_type = CACHE_DICTION[dict_key][pt]
+			self.states = CACHE_DICTION[dict_key][s]
+			self.address = CACHE_DICTION[dict_key][a]
+			self.phone = CACHE_DICTION[dict_key][ph]
+			self.planning = CACHE_DICTION[dict_key][pl]
+		else:
+		'''
+		#print(url)
+		
+		# As before, scrape the supplied url.
+		np_request = requests.get(url).text
+		np_soup = BeautifulSoup(np_request, "html.parser")
+
+		# One specific div contains info on the name, park type, and state.
+		# Not all parks have all three, so this may be incomplete at times.
+		np_ntl = np_soup.find("div", {"class" : "Hero-titleContainer clearfix"})
+		self.name = np_ntl.find("a", {"class" : "Hero-title"}).text
+		self.park_type = np_ntl.find("span", {"class" : "Hero-designation"}).text
+		self.states = np_ntl.find("span", {"class" : "Hero-location"}).text
+
+		# Another div has both the address and phone number.
+		np_ap = np_soup.find("div", {"class" : "ParkFooter-contact"})
+		try:
+			self.address = np_ap.find("div", {"itemprop" : "address"}).text.replace('\n', ' ').strip()
+		except:
+			self.address = self.states
+		try:
+			self.phone = np_ap.find("span", {"itemprop" : "telephone"}).text.replace('\n', ' ').strip()
+			self.has_phone = True
+		except:
+			self.phone = "(Phone Unavailable)"
+			self.has_phone = False
+
+		# Different parks have varying levels of information for safety/accomodations.
+		# This program is currently just saving the text on the "plan your visit" page.
+		# This page contains an overview of the accomodations and warnings, if any exist.
+		extra_request = requests.get(url + "planyourvisit/index.htm").text
+		extra_soup = BeautifulSoup(extra_request, "html.parser")
+		try:
+			self.planning = np_ntl.find("div", {"class" : "Component text-content-size text-content-style ArticleTextGroup clearfix"}).text
+		except:
+			self.planning = "There are currently no posted warnings or accomodations, but you can contact the site for more information!"
+	'''
+			# Cache the information as a dictionary of variables.
+			self.full_dict = {"n" : self.name, "pt" : self.park_type, "s" : self.states, "a" : self.address, "ph" : self.phone, "pl" : self.planning}
+			CACHE_DICTION[dict_key] = self.full_dict
+			f = open(CACHE_FILENAME, "w")
+			f.write(json.dumps(CACHE_DICTION))
+			f.close()
+	'''
+	def __str__(self):
+		to_print = self.name + " is a " + self.park_type + " located in the following states: " + self.states + "\n\n"
+		to_print += "They are located at " + self.address 
+		if (self.has_phone):
+			to_print += ", and can be reached by phone at "+ self.phone + "\n\n"
+		else :
+			to_print += ", but do not have a phone number listed.\n\n"
+		to_print += "Here is some important information about " + self.name + ":\n" + self.planning + "\n\n"
+		to_print += "----------------------------------------"
+		return to_print
+
 # Create a list of NationalPark objects.
 all_urls = build_park_directory()
 full_np_objects = []
 
+
+# TESTING: ONLY MAKE IT FOR ALABAMA FOR NOW, JUST IN CASE SOMETHING GOES WRONG.
+alabama = all_urls[0]
+for individual_park in alabama:
+	temp_np = NationalPark(individual_park)
+	print(temp_np)
+	full_np_objects.append(temp_np)
+
+'''
 for parks_per_state in all_urls:
 	for individual_park in parks_per_state:
-		print(individual_park + "\n")
+		temp_np = NationalPark(individual_park)
+		print(temp_np)
+		full_np_objects.append(temp_np)
 	print("\n")
-
-
-#class NationalPark():
-#	def __init__(self):
-		# self.name = TODO
-		# self.location = TODO
-		# self.states = TODO
-		# self.access = TODO
-		# self.contact = TODO
-		# self.urls = TODO
-
-
-
-
+'''
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
