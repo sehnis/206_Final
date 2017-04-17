@@ -16,6 +16,14 @@
 
 # Put all import statements you need here.
 
+from bs4 import BeautifulSoup
+import collections
+import json
+import re
+import requests
+import sqlite3
+import unittest
+
 # Begin filling in instructions....
 
 
@@ -29,3 +37,6 @@
 
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
+
+if __name__ == "__main__":
+	unittest.main(verbosity=2)
