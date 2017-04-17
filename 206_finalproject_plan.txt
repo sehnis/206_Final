@@ -1,0 +1,137 @@
+SI 206 W17
+Put your name here:
+Sam Ehnis-Clark (sehnis)
+----
+
+Which option for the final project are you choosing -- 1, 2, or 3?
+
+	# 1 -- National Parks
+
+IF YOU ARE CHOOSING OPTION 3, answer the following questions:
+
+* Write 1-3 sentences summarizing what the goal of your project is:
+
+	N/A
+
+* What are your two data sources? Provide links to documentation or websites you will be getting data from.
+
+	N/A
+
+* Why are you proposing this project?
+
+	N/A
+
+* What will the output of this project be? What will it look like, and what information will it contain?
+
+	N/A
+
+* What are your concerns about this proposal?
+
+	N/A
+
+-----
+
+THE FOLLOWING QUESTIONS ARE FOR EVERYONE. (Though they may be easier if you are choosing Option 1 or 2, because you can reference the Option 1 or 2 instructions.)
+
+* What will at least one of the classes you're going to define be called?
+
+	NationalPark, as per the project instructions
+
+* What will that class take as input to its constructor?
+
+	A string, which will be used with BeautifulSoup to locate the park.
+
+* What will 1 instance of this class represent?
+
+	A single national park.
+
+* What are 3 instance variables this class will have? What will they be called, and what information will they hold? Why are they important?
+
+	location -- the address/state of the park, formatted as text. This is important because it creates a directory of sorts when multiple national park objects are assembled in a data structure.
+
+	park_url -- the text of the park's individual url, which each park has under the nps.gov domain. This could further help in creating an informatonal directory of the various parks.
+
+	accessibility_info -- each park lists "accessibility" information, so collecting this information would assist in helping to choose which park would be best for theoretical users.
+
+* Explain 2 methods the class will have that are not the class constructor (__init__ method) by answering the following questions for each. 
+ONE METHOD:
+- What will the name of the method be?
+
+	print_contact
+
+- What will the method do?
+
+	when the user wants to contact the park, this function prints out the appropriate information (email, phone number, address, etc.)
+
+- Will it take any additional input? 
+
+	it can take in an optional input, if only one method of contact is desired. By default it would print all of the contact information it had, but it could be forced to only return email/phone number/address.
+
+- Will it return anything? Should it change anything about the instance/an instance variable? 
+
+	no. This simply considers the existing information, and prints it without altering the data itself or returning anything.
+
+- Why is it useful for this class definition, in this program?
+
+	this allows the user to see and interpret the data stored within the structure for a practical use.
+
+ANOTHER METHOD:
+- What will the name of the method be?
+
+	collect_urls
+
+- What will the method do?
+
+	when prompted, this method will use BeautifulSoup to collect all of the urls contained within the body of the park description. These typically refer to informational PDFs and maps, and could be considerably useful.
+
+- Will it take any additional input? 
+
+	no. A single call returns a list of all of the contained urls.
+
+- Will it return anything? Should it change anything about the instance/an instance variable? 
+
+	yes, this will return a list of strings referring to the various urls contained on the page. If this list of urls were to be stored as an instance variable then there would be a change, but is is not necessary that this information be stored in this way.
+
+- Why is it useful for this class definition, in this program?
+
+	it allows for there to be even more informational output if desired, without requiring there to be an excessive amount of printed information by default.
+
+[If you definitely want to have a third, feel free to answer those questions a third time, because you'll have to do so eventually. when you write documentation!]
+
+
+* What will the tables in your database be?
+
+	the tables within the database will likely refer to the different states, with each table containing parks and related information.
+
+* What fields will each database table have? Which field of them is the primary key? You should list the fields for each database table here, e.g.
+Tweets:
+- text ... 
+(etc.)
+
+	park_name TEXT PRIMARY KEY
+	park_instance TEXT
+	weather_forecast TEXT
+	proximity INT
+	info_available BOOL
+
+* List, in English, 2 queries you'll want to make from your database. At least one should be a JOIN. You can always change these later, but start with  ideas you're interested in and lessen the work on yourself later on! 
+(e.g. from class examples, maybe "I want to make a query that accesses the numbers of times each user has favorited tweets, and the number of times tweets that user posted have been favorited -- so I'll be joining the Tweets table and the Users table")
+
+	SELECT park_name, proximity FROM Ohio INNER JOIN Michigan ON Ohio.proximity < Michigan.proximity
+
+	SELECT park_name FROM Michigan WHERE weather_forecast = sunny
+
+* What are at least 2 of the data processing mechanics you're planning to use? 
+
+	Set Comprehension -- I will need to pull specific park names from large sets of park information, so set comprehension could be beneficial in pulling out specific details.
+
+	Regular Expressions -- Paired with Beautiful Soup, this could allow me to easily pick out urls and emails when used with the right blocks of text.
+
+
+* Why will each of those be useful to you? What data might you use it on? 
+(e.g. "Set comprehension: I think I'm going to be looking for unique names and proper nouns in this big set of text, so I'm going to use a set comprehension"). 
+>>>This is especially important if you are doing Option 3, but it's important for everyone!<<<
+
+* What will your output look like? Will it be a .txt file? a CSV file? something else? What information will it contain? >>>This is especially important if you are doing Option 3, but it's important for everyone!<<<
+
+	The file output will be a .txt document, formatted to be easily readable by the user.
