@@ -63,7 +63,7 @@ def build_state_directory():
 		state_soup = BeautifulSoup(state_request, "html.parser")
 		found_states = state_soup.find("ul", {"role" : "menu"})
 
-		# Get the partial urls from the list's "href" elements, and create full urls from them.
+		# Get the partial urls from the list's "href" elements, and add the base to them.
 			# Example: "/state/al/index.htm"  -->  "https://www.nps.gov/state/al/index.htm"
 		raw_urls = [partial["href"] for partial in found_states.find_all("a")]
 		found_urls = ["https://www.nps.gov" + raw for raw in raw_urls]
@@ -135,6 +135,7 @@ class NationalPark():
 		self.park_url = url
 
 		if dict_key in CACHE_DICTION:
+			# Data is stored as a dictionary in the cache, so retrieve it if it was already found.
 			self.name = CACHE_DICTION[dict_key]["n"]
 			self.park_type = CACHE_DICTION[dict_key]["pt"]
 			self.states = CACHE_DICTION[dict_key]["s"]
@@ -145,7 +146,7 @@ class NationalPark():
 		else:
 
 			# As before, scrape the supplied url.
-			np_request = requests.get(url+ "index.htm").text
+			np_request = requests.get(url + "index.htm").text
 			np_soup = BeautifulSoup(np_request, "html.parser")
 
 			# One specific div contains info on the name, park type, and state.
@@ -154,8 +155,7 @@ class NationalPark():
 			try:
 				self.name = np_ntl.find("a", {"class" : "Hero-title"}).text
 			except:
-				# If the name can’t be found, there isn’t enough info to go on.
-				pass
+				self.name = "[Unnamed Park]"
 			try:
 				self.park_type = np_ntl.find("span", {"class" : "Hero-designation"}).text
 			except:
@@ -176,7 +176,7 @@ class NationalPark():
 				self.phone = np_ap.find("span", {"itemprop" : "telephone"}).text.replace('\n', ' ').strip()
 				self.has_phone = True
 			except:
-				self.phone = "(Phone Unavailable)"
+				self.phone = "[Phone Unavailable]"
 				self.has_phone = False
 
 			# Different parks have varying levels of information for safety/accomodations.
@@ -197,6 +197,7 @@ class NationalPark():
 			f.write(json.dumps(CACHE_DICTION))
 			f.close()
 	
+	# When printed directly, this uses several variables for an in-depth result.
 	def __str__(self):
 		to_print = self.name + " is a " + self.park_type + " located in the following states: " + self.states + "\n\n"
 		to_print += "They are located at " + self.address 
@@ -243,6 +244,39 @@ for parks_per_state in all_urls:
 		full_np_objects.append(temp_np)
 	print("\n")
 '''
+
+
+# DATABASE CREATION
+
+# Create the database connection and cursor.
+con = sqlite3.connect("206_final_data.db")
+cur = con.cursor()
+
+# Clear out any existing tables and create a new one.
+cur.execute("DROP TABLE IF EXISTS Parks")
+cur.execute("CREATE TABLE IF NOT EXISTS Parks (park_name TEXT PRIMARY KEY, park_info TEXT, park_url TEXT, park_phone TEXT, park_states TEXT, park_address TEXT)")
+
+# Populate the table based on the list of NationalPark objects created.
+np_base = "INSERT OR IGNORE INTO Parks VALUES (?, ?, ?, ?, ?, ?)"
+for np in full_np_objects:
+	try:
+		# Get member variables, and condense them into a tuple to be entered into the table.
+		p_name = np.name
+		p_info = np.short_print()
+		p_url = np.park_url
+		p_phone = np.phone
+		p_states = np.states
+		p_address = np.address
+		p_entry = (p_name, p_info, p_url, p_phone, p_states, p_address)
+		cur.execute(np_base, p_entry)
+	except:
+		# Error handling should make it so this isn't needed, but this helps with severely broken entries.
+		pass
+
+# Commit the changes to the database, then close it.
+# This is one location where more data will be added after this portion of the project is complete.
+con.commit()
+con.close()
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
