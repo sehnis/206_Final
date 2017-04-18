@@ -222,7 +222,7 @@ class NationalPark():
 		else:
 			to_print = "There is no phone number available, but you can find more information at the park website: " + self.url
 		return to_print
-'''
+
 # Create a list of NationalPark objects.
 all_urls = build_park_directory()
 full_np_objects = []
@@ -259,11 +259,8 @@ for np in full_np_objects:
 		# Error handling should make it so this isn't needed, but this helps with severely broken entries.
 		pass
 
-# Commit the changes to the database, then close it.
-# This is one location where more data will be added after this portion of the project is complete.
+# Commit the changes to the database.
 con.commit()
-'''
-
 
 
 # PART TWO -- ARTICLES
@@ -285,9 +282,10 @@ def build_article_directory():
 		for ia in individual_art:
 			# Get the title, link, and thumbnail src, then combine and cache them.
 			art_title = ia.find("h3").text
+			art_info = ia.find("p", {"class" : "Feature-description"}).text
 			art_url = "https://www.nps.gov" + ia.find("a", {"class" : "Feature-link"})["href"]
 			art_thumb = "https://www.nps.gov" + ia.find("img", {"class" : "Feature-image"})["src"]
-			art_full = (art_title, art_url, art_thumb)
+			art_full = (art_title, art_info, art_url, art_thumb)
 			all_articles.append(art_full)
 
 		# Small Articles
@@ -295,9 +293,10 @@ def build_article_directory():
 		for ia in individual_art:
 			# Get the title, link, and thumbnail src, then combine and cache them.
 			art_title = ia.find("h3").text
+			art_info = ia.find("p", {"class" : "Feature-description"}).text
 			art_url = "https://www.nps.gov" + ia.find("a", {"class" : "Feature-link"})["href"]
 			art_thumb = "https://www.nps.gov" + ia.find("img", {"class" : "Feature-image"})["src"]
-			art_full = (art_title, art_url, art_thumb)
+			art_full = (art_title, art_info, art_url, art_thumb)
 			all_articles.append(art_full)
 
 		CACHE_DICTION["article_data"] = all_articles
@@ -307,7 +306,19 @@ def build_article_directory():
 
 	return all_articles
 
-#con.close()
+# ADD ARTICLE TABLE TO DATABASE
+cur.execute("DROP TABLE IF EXISTS Articles")
+cur.execute("CREATE TABLE IF NOT EXISTS Articles (art_title TEXT PRIMARY KEY, art_info TEXT, art_url TEXT, art_thumb TEXT)")
+
+# Populate the table based on the list of Article objects created.
+ap_base = "INSERT OR IGNORE INTO Articles VALUES (?, ?, ?, ?)"
+ap_content = build_article_directory()
+for ap in ap_content:
+	cur.execute(ap_base, ap)
+
+# Commit this table, and close the whole database.
+con.commit()
+con.close()
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
