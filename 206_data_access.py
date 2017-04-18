@@ -227,24 +227,10 @@ class NationalPark():
 all_urls = build_park_directory()
 full_np_objects = []
 
-
-# TESTING: ONLY MAKE IT FOR ALABAMA FOR NOW, JUST IN CASE SOMETHING GOES WRONG.
-alabama = all_urls[0]
-print("The following parks are located in Alabama:" + "\n")
-for individual_park in alabama:
-	temp_np = NationalPark(individual_park)
-	print("    " + temp_np.short_print() + "\n")
-	full_np_objects.append(temp_np)
-
-'''
+# Insert the NationalPark objects into a giant list.
 for parks_per_state in all_urls:
 	for individual_park in parks_per_state:
-		temp_np = NationalPark(individual_park)
-		print(temp_np)
-		full_np_objects.append(temp_np)
-	print("\n")
-'''
-
+		full_np_objects.append(NationalPark(individual_park))
 
 # DATABASE CREATION
 
