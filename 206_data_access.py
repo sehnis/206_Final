@@ -132,6 +132,8 @@ class NationalPark():
 		# so caching is used as it was before (large cache file, but more reasonable requests.)
 		dict_key = url + "_data"
 		
+		self.park_url = url
+
 		if dict_key in CACHE_DICTION:
 			self.name = CACHE_DICTION[dict_key]["n"]
 			self.park_type = CACHE_DICTION[dict_key]["pt"]
@@ -207,6 +209,19 @@ class NationalPark():
 		to_print.encode("utf-8")
 		return to_print
 
+	# Produces a condensed message about the park name and location.
+	def short_print(self):
+		to_print = self.name + " at " + self.address
+		return to_print
+
+	# Produces a condensed message about the park's phone number for printing.
+	def short_phone(self):
+		if self.has_phone:
+			to_print = "You can reach the park at " + self.phone
+		else:
+			to_print = "There is no phone number available, but you can find more information at the park website: " + self.url
+		return to_print
+
 # Create a list of NationalPark objects.
 all_urls = build_park_directory()
 full_np_objects = []
@@ -214,9 +229,10 @@ full_np_objects = []
 
 # TESTING: ONLY MAKE IT FOR ALABAMA FOR NOW, JUST IN CASE SOMETHING GOES WRONG.
 alabama = all_urls[0]
+print("The following parks are located in Alabama:" + "\n")
 for individual_park in alabama:
 	temp_np = NationalPark(individual_park)
-	print(temp_np)
+	print("    " + temp_np.short_print() + "\n")
 	full_np_objects.append(temp_np)
 
 '''
@@ -229,6 +245,40 @@ for parks_per_state in all_urls:
 '''
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
+
+class TestParkVariables(unittest.TestCase):
+	def test_park_url(self):
+		url_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(url_test.park_url, "https://www.nps.gov/hobe/", "Testing that the park's base url is correctly copied.")
+	def test_park_name(self):
+		name_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(name_test.name, "Horseshoe Bend", "Testing that the park's name is correctly created.")
+	def test_park_type(self):
+		type_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(type_test.park_type, "National Military Park", "Testing that the park's type is correctly created.")
+	def test_park_states(self):
+		states_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(states_test.states, "Alabama", "Testing that the park's list of states is correctly created.")
+	def test_park_address(self):
+		address_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(address_test.address, "11288 Horseshoe Bend Road   Daviston, AL 36256", "Testing that the park's address is correctly created.")
+	def test_park_phone(self):
+		phone_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(phone_test.phone, "(256) 234-7111", "Testing that the park's phone number is correctly created.")
+	def test_park_has_phone(self):
+		has_phone_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(has_phone_test.has_phone, True, "Testing that the park's list of states is correctly created.")
+	def test_park_planning(self):
+		planning_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(type(planning_test.planning), type("String about planning"), "Testing that the park's planning information is correctly created as a string.")
+	
+class TestParkMembers(unittest.TestCase):
+	def test_short_print(self):
+		spr_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(type(spr_test.short_print()), type("Printable string"), "Testing that short_print returns a printable string.")
+	def test_short_phone(self):
+		sph_test = NationalPark("https://www.nps.gov/hobe/")
+		self.assertEqual(type(sph_test.short_phone()), type("Printable string"), "Testing that short_phone returns a printable string.")
 
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
