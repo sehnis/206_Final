@@ -222,7 +222,7 @@ class NationalPark():
 		else:
 			to_print = "There is no phone number available, but you can find more information at the park website: " + self.url
 		return to_print
-
+'''
 # Create a list of NationalPark objects.
 all_urls = build_park_directory()
 full_np_objects = []
@@ -262,7 +262,52 @@ for np in full_np_objects:
 # Commit the changes to the database, then close it.
 # This is one location where more data will be added after this portion of the project is complete.
 con.commit()
-con.close()
+'''
+
+
+
+# PART TWO -- ARTICLES
+
+def build_article_directory():
+
+	all_articles = []
+
+	# If article urls already in the cache, use them.
+	if "article_data" in CACHE_DICTION:
+		all_articles = CACHE_DICTION["article_data"]
+	else:
+		# Otherwise, setup and use requests/soup.
+		art_response = requests.get("https://www.nps.gov/index.htm").text
+		art_soup = BeautifulSoup(art_response, "html.parser")
+
+		# Medium Articles
+		individual_art = art_soup.find_all("div", {"class":"Component Feature -medium"})
+		for ia in individual_art:
+			# Get the title, link, and thumbnail src, then combine and cache them.
+			art_title = ia.find("h3").text
+			art_url = "https://www.nps.gov" + ia.find("a", {"class" : "Feature-link"})["href"]
+			art_thumb = "https://www.nps.gov" + ia.find("img", {"class" : "Feature-image"})["src"]
+			art_full = (art_title, art_url, art_thumb)
+			all_articles.append(art_full)
+
+		# Small Articles
+		individual_art = art_soup.find_all("div", {"class":"Component Feature -small"})
+		for ia in individual_art:
+			# Get the title, link, and thumbnail src, then combine and cache them.
+			art_title = ia.find("h3").text
+			art_url = "https://www.nps.gov" + ia.find("a", {"class" : "Feature-link"})["href"]
+			art_thumb = "https://www.nps.gov" + ia.find("img", {"class" : "Feature-image"})["src"]
+			art_full = (art_title, art_url, art_thumb)
+			all_articles.append(art_full)
+
+		CACHE_DICTION["article_data"] = all_articles
+		f = open(CACHE_FILENAME, "w")
+		f.write(json.dumps(CACHE_DICTION))
+		f.close()
+
+	return all_articles
+
+#con.close()
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
