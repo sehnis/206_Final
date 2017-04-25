@@ -120,6 +120,56 @@ def build_park_directory():
 	# When done iterating, return the master list of urls.
 	return all_parks
 
+# PART THREE -- STATES / WEATHER
+
+# Huge dict of all of the states/territories that have parks.
+states_dict = {"Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "American Samoa": "AS", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Guam": "GU", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",  "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",  "Northern Mariana Islands": "MP", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",  "Oregon": "OR", "Pennsylvania": "PA", "Puerto Rico": "PR", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Virgin Islands": "VI", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"}
+rev_states_dict= {"AL" : "Alabama", "AK": "Alaska", "AZ" : "Arizona", "AR" : "Arkansas", "AS" : "American Samoa", "CA" : "California", "CO" :  "Colorado", "CT" : "Connecticut", "DE" : "Delaware", "DC" : "District of Columbia", "FL" : "Florida", "GA" : "Georgia", "GU" : "Guam", "HI": "Hawaii", "ID" : "Idaho", "IL" : "Illinois", "IN" : "Indiana", "IA" : "Iowa", "KS" : "Kansas", "KY" : "Kentucky", "LA" : "Louisiana", "ME" : "Maine", "MD" : "Maryland", "MA" : "Massachusetts", "MI" : "Michigan", "MN" :  "Minnesota", "MP" : "Northern Mariana Islands", "MS" : "Mississippi", "MO" : "Missouri", "MT" : "Montana", "NE" : "Nebraska", "NV" : "Nevada", "NH" : "New Hampshire", "NJ" : "New Jersey", "NM" : "New Mexico", "NY" : "New York", "NC" :  "North Carolina", "ND" : "North Dakota", "OH" : "Ohio", "OK" : "Oklahoma", "OR" : "Oregon", "PA" : "Pennsylvania", "PR" : "Puerto Rico", "RI" : "Rhode Island", "SC" : "South Carolina", "SD" : "South Dakota", "TN" : "Tennessee", "TX" : "Texas", "UT" : "Utah", "VI" : "Virgin Islands", "VT" : "Vermont", "VA" : "Virginia", "WA" : "Washington", "WV" : "West Virginia", "WI" : "Wisconsin", "WY" : "Wyoming"}
+
+def build_weather_directory():
+
+	# Create a list of weather forecasts.
+	all_weather = {}
+
+	if "weather_data" in CACHE_DICTION:
+		all_weather = CACHE_DICTION["weather_data"]
+	else:
+
+		weather_response = requests.get("https://www.currentresults.com/Weather/US/average-annual-state-temperatures.php").text
+		weather_soup = BeautifulSoup(weather_response, "html.parser")
+		weather_table = weather_soup.find_all("table", {"class":"articletable tablecol-1-left"})
+
+		all_states = []
+		state_forecast = []
+
+		for forecast in weather_table:
+			all_states = forecast.find_all("tr")
+			for state in all_states:
+				for sta in state.find_all("td"):
+					state_forecast.append(sta.text) 
+				# Load information 
+				try:
+					state_weather = state_forecast[0]
+					state_fahrenheit = state_forecast[1]
+					state_celcius = state_forecast[2]
+				except:
+					state_weather = "[UNKNOWN STATE]"
+					state_fahrenheit = "[TEMP UNKNOWN]"
+					state_celcius = "[TEMP UNKNOWN]"
+
+				# Associate both temps with the state name.
+				state_temps = (state_fahrenheit, state_celcius)
+				all_weather[state_weather] = state_temps
+
+		CACHE_DICTION["weather_data"] = all_weather
+		f = open(CACHE_FILENAME, "w")
+		f.write(json.dumps(CACHE_DICTION))
+		f.close()
+
+	return all_weather
+
+bwd = build_weather_directory()
+print(bwd)
 # CREATE NATIONALPARK OBJECTS -- Use the state urls to initialize the states.
 	
 	# At this point, using BeautifulSoup on the park urls gets us all the information we need for the individual parks.
@@ -209,6 +259,14 @@ class NationalPark():
 			to_print += ", and can be reached by phone at "+ self.phone + "\n\n"
 		else :
 			to_print += ", but do not have a phone number listed.\n\n"
+		temps = ("?", "?")
+		for abv in self.state_abvs:
+			for w in bwd:
+				# print(w[0])
+				if (abv == w[0]):
+					temps = (bwd[abv][1], bwd[abv][2])
+		to_print += "The expected forecast is " + temps[0] + " degrees F, or " + temps[1] + " degrees C.\n"
+		
 		to_print += "Here is some important information about " + self.name + ":\n" + self.planning + "\n\n"
 		to_print += "----------------------------------------"
 		to_print.encode("utf-8")
@@ -227,16 +285,18 @@ class NationalPark():
 			to_print = "There is no phone number available, but you can find more information at the park website: " + self.url
 		return to_print
 
+
+all_urls = build_park_directory()
+full_np_objects = []
+for parks_per_state in all_urls:
+	for individual_park in parks_per_state:
+		full_np_objects.append(NationalPark(individual_park))
+
+
 def update_db():
 	# Create a list of NationalPark objects.
-	all_urls = build_park_directory()
-	full_np_objects = []
 
 	# Insert the NationalPark objects into a giant list.
-	for parks_per_state in all_urls:
-		for individual_park in parks_per_state:
-			full_np_objects.append(NationalPark(individual_park))
-
 	# DATABASE CREATION
 
 	# Create the database connection and cursor.
@@ -311,14 +371,19 @@ def build_article_directory():
 
 	return all_articles
 
+
+ap_content = build_article_directory()
+
 def article_db():
 	# ADD ARTICLE TABLE TO DATABASE
+	con = sqlite3.connect("206_final_data.db")
+	cur = con.cursor()
+
 	cur.execute("DROP TABLE IF EXISTS Articles")
 	cur.execute("CREATE TABLE IF NOT EXISTS Articles (art_title TEXT PRIMARY KEY, art_info TEXT, art_url TEXT, art_thumb TEXT)")
 
 	# Populate the table based on the list of Article objects created.
 	ap_base = "INSERT OR IGNORE INTO Articles VALUES (?, ?, ?, ?)"
-	ap_content = build_article_directory()
 	for ap in ap_content:
 		cur.execute(ap_base, ap)
 
@@ -326,53 +391,6 @@ def article_db():
 	con.commit()
 	con.close()
 
-
-# PART THREE -- STATES / WEATHER
-
-# Huge dict of all of the states/territories that have parks.
-states_dict = {"Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "American Samoa": "AS", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Guam": "GU", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",  "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",  "Northern Mariana Islands": "MP", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",  "Oregon": "OR", "Pennsylvania": "PA", "Puerto Rico": "PR", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Virgin Islands": "VI", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"}
-rev_states_dict= {"AL" : "Alabama", "AK": "Alaska", "AZ" : "Arizona", "AR" : "Arkansas", "AS" : "American Samoa", "CA" : "California", "CO" :  "Colorado", "CT" : "Connecticut", "DE" : "Delaware", "DC" : "District of Columbia", "FL" : "Florida", "GA" : "Georgia", "GU" : "Guam", "HI": "Hawaii", "ID" : "Idaho", "IL" : "Illinois", "IN" : "Indiana", "IA" : "Iowa", "KS" : "Kansas", "KY" : "Kentucky", "LA" : "Louisiana", "ME" : "Maine", "MD" : "Maryland", "MA" : "Massachusetts", "MI" : "Michigan", "MN" :  "Minnesota", "MP" : "Northern Mariana Islands", "MS" : "Mississippi", "MO" : "Missouri", "MT" : "Montana", "NE" : "Nebraska", "NV" : "Nevada", "NH" : "New Hampshire", "NJ" : "New Jersey", "NM" : "New Mexico", "NY" : "New York", "NC" :  "North Carolina", "ND" : "North Dakota", "OH" : "Ohio", "OK" : "Oklahoma", "OR" : "Oregon", "PA" : "Pennsylvania", "PR" : "Puerto Rico", "RI" : "Rhode Island", "SC" : "South Carolina", "SD" : "South Dakota", "TN" : "Tennessee", "TX" : "Texas", "UT" : "Utah", "VI" : "Virgin Islands", "VT" : "Vermont", "VA" : "Virginia", "WA" : "Washington", "WV" : "West Virginia", "WI" : "Wisconsin", "WY" : "Wyoming"}
-
-def build_weather_directory():
-
-	# Create a list of weather forecasts.
-	all_weather = {}
-
-	if "weather_data" in CACHE_DICTION:
-		all_weather = CACHE_DICTION["weather_data"]
-	else:
-
-		weather_response = requests.get("https://www.currentresults.com/Weather/US/average-annual-state-temperatures.php").text
-		weather_soup = BeautifulSoup(weather_response, "html.parser")
-		weather_table = weather_soup.find_all("table", {"class":"articletable tablecol-1-left"})
-
-		all_states = []
-		state_forecast = []
-
-		for forecast in weather_table:
-			all_states = forecast.find_all("tr")
-			for state in all_states:
-				state_forecast = list(state.find_all("td").text)
-				# Load information 
-				try:
-					state_weather = state_forecast[0]
-					state_fahrenheit = state_forecast[1]
-					state_celcius = state_forecast[2]
-				except:
-					state_weather = "[UNKNOWN STATE]"
-					state_fahrenheit = "[TEMP UNKNOWN]"
-					state_celcius = "[TEMP UNKNOWN"
-
-				# Associate both temps with the state name.
-				state_temps = (state_fahrenheit, state_celcius)
-				all_weather[state_weather] = state_temps
-
-		CACHE_DICTION["weather_data"] = all_weather
-		f = open(CACHE_FILENAME, "w")
-		f.write(json.dumps(CACHE_DICTION))
-		f.close()
-
-	return temps_dict
 
 ##########
 

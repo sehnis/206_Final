@@ -6,6 +6,8 @@ SI206 Final Project by Sam Ehnis-Clark [sehnis]
 
 Usage
 -----
+python 206_data_access.py
+
 The program prompts the user for input on which functionality to use.
 Several options lead to further choices, as the user will see.
 
