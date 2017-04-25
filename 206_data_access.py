@@ -25,6 +25,7 @@ import requests
 import sqlite3
 import sys
 import unittest
+import webbrowser
 
 # From Piazza -- combats codec errors for Windows.
 sys.stdout = codecs.getwriter('utf8')(sys.stdout.buffer)
@@ -107,7 +108,7 @@ def build_park_directory():
 			found_urls = ["https://www.nps.gov" + raw for raw in raw_urls]
 
 			# Add the list of found urls to the overarching list of park urls.
-			all_parks.append(found_urls)
+			all_parks.append((state, found_urls))
 
 		# If the program hit this else loop, then the cache doesn't exist and needs to be made like this.
 		# This should save a considerable amount of time instead of rescraping every time.
@@ -143,6 +144,7 @@ class NationalPark():
 			self.phone = CACHE_DICTION[dict_key]["ph"]
 			self.planning = CACHE_DICTION[dict_key]["pl"]
 			self.has_phone = CACHE_DICTION[dict_key]["hf"]
+			self.state_abvs = re.findall('[A-Z]{2}', self.address)
 		else:
 
 			# As before, scrape the supplied url.
@@ -178,6 +180,8 @@ class NationalPark():
 			except:
 				self.phone = "[Phone Unavailable]"
 				self.has_phone = False
+
+			self.state_abvs = re.findall('[A-Z]{2}', self.address)
 
 			# Different parks have varying levels of information for safety/accomodations.
 			# This program is currently just saving the text on the "plan your visit" page.
@@ -319,6 +323,170 @@ for ap in ap_content:
 # Commit this table, and close the whole database.
 con.commit()
 con.close()
+
+
+# PART THREE -- STATES / WEATHER
+
+# Huge dict of all of the states/territories that have parks.
+states_dict = {"Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "American Samoa": "AS", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Guam": "GU", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",  "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",  "Northern Mariana Islands": "MP", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",  "Oregon": "OR", "Pennsylvania": "PA", "Puerto Rico": "PR", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Virgin Islands": "VI", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"}
+rev_states_dict= {"AL" : "Alabama", "AK": "Alaska", "AZ" : "Arizona", "AR" : "Arkansas", "AS" : "American Samoa", "CA" : "California", "CO" :  "Colorado", "CT" : "Connecticut", "DE" : "Delaware", "DC" : "District of Columbia", "FL" : "Florida", "GA" : "Georgia", "GU" : "Guam", "HI": "Hawaii", "ID" : "Idaho", "IL" : "Illinois", "IN" : "Indiana", "IA" : "Iowa", "KS" : "Kansas", "KY" : "Kentucky", "LA" : "Louisiana", "ME" : "Maine", "MD" : "Maryland", "MA" : "Massachusetts", "MI" : "Michigan", "MN" :  "Minnesota", "MP" : "Northern Mariana Islands", "MS" : "Mississippi", "MO" : "Missouri", "MT" : "Montana", "NE" : "Nebraska", "NV" : "Nevada", "NH" : "New Hampshire", "NJ" : "New Jersey", "NM" : "New Mexico", "NY" : "New York", "NC" :  "North Carolina", "ND" : "North Dakota", "OH" : "Ohio", "OK" : "Oklahoma", "OR" : "Oregon", "PA" : "Pennsylvania", "PR" : "Puerto Rico", "RI" : "Rhode Island", "SC" : "South Carolina", "SD" : "South Dakota", "TN" : "Tennessee", "TX" : "Texas", "UT" : "Utah", "VI" : "Virgin Islands", "VT" : "Vermont", "VA" : "Virginia", "WA" : "Washington", "WV" : "West Virginia", "WI" : "Wisconsin", "WY" : "Wyoming"}
+
+def build_weather_directory():
+
+	# Create a list of weather forecasts.
+	all_weather = {}
+
+	if "weather_data" in CACHE_DICTION:
+		all_weather = CACHE_DICTION["weather_data"]
+	else:
+
+		weather_response = requests.get("https://www.currentresults.com/Weather/US/average-annual-state-temperatures.php").text
+		weather_soup = BeautifulSoup(weather_response, "html.parser")
+		weather_table = weather_soup.find_all("table", {"class":"articletable tablecol-1-left"})
+
+		all_states = []
+		state_forecast = []
+
+		for forecast in weather_table:
+			all_states = forecast.find_all("tr")
+			for state in all_states:
+				state_forecast = list(state.find_all("td").text)
+				# Load information 
+				try:
+					state_weather = state_forecast[0]
+					state_fahrenheit = state_forecast[1]
+					state_celcius = state_forecast[2]
+				except:
+					state_weather = "[UNKNOWN STATE]"
+					state_fahrenheit = "[TEMP UNKNOWN]"
+					state_celcius = "[TEMP UNKNOWN"
+
+				# Associate both temps with the state name.
+				state_temps = (state_fahrenheit, state_celcius)
+				all_weather[state_weather] = state_temps
+
+		CACHE_DICTION["weather_data"] = all_weather
+		f = open(CACHE_FILENAME, "w")
+		f.write(json.dumps(CACHE_DICTION))
+		f.close()
+
+	return temps_dict
+
+##########
+
+# PART FOUR -- PROCESSING / PRINTING
+
+def list_parks(state_abv):
+	parks_in_state = []
+	for s in full_np_objects:
+		if state_abv in s.state_abvs:
+			parks_in_state.append(s)
+	print("HERE ARE ALL PARKS WITH ADDRESSES LISTED IN " + state_abv + ":")
+	print("WHICH ONE WOULD YOU LIKE TO KNOW MORE ABOUT?")
+	num = 1
+	for p in parks_in_state:
+		print(str(num) + ". " + p.name)
+		num += 1
+	choicepark = int(input())
+	return parks_in_state[choicepark - 1]
+
+
+def run_parkfinder():
+	print("PLEASE ENTER THE TWO-LETTER ABBREVIATION OF THE STATE YOU'D LIKE TO VIEW PARKS FOR.")
+	print("IF YOU DO NOT KNOW YOUR STATE'S ABBREVIATION, ENTER \"HELP\" ")
+	
+	temp_state_dict = sorted(states_dict.items())
+	chosen = False
+
+	while (not chosen):
+		choice = input()
+
+		if (choice == "HELP" or choice == "Help" or choice == "help"):
+			for abv, ent in temp_state_dict:
+				print(abv + " is " + ent)
+		if choice in rev_states_dict:
+			print("YOU CHOSE " + rev_states_dict[choice])
+			return choice
+			chosen = True
+		elif (choice != "HELP" and choice != "Help" and choice != "help"):
+			print("COMMAND NOT RECOGNIZED")
+
+def run_articlefinder():
+
+	print("WHICH ARTICLE WOULD YOU LIKE TO SEE?\n")
+	art_choice = 1
+	ap_too = build_article_directory()
+	for ap in ap_too:
+		print (str(art_choice) + ". " + ap[0])
+		art_choice += 1
+	art_sel = int(input())
+	print("\nYOU CHOSE: " + ap_content[art_sel - 1][0])
+	print("WOULD YOU LIKE A SYNOPSIS, THE THUMBNAIL, OR THE FULL ARTICLE?\n1. SYNOPSIS\n2. THUMBNAIL\n3. FULL ARTICLE\n")
+	synfull = input()
+	if (synfull == "1"):
+		print(ap_content[art_sel - 1][1])
+		print("WOULD YOU LIKE TO VIEW THE FULL ARTICLE?\n\n1. YES\n2. NO\n")
+		fullthough = input()
+		if (fullthough == "1"):
+			webbrowser.open_new_tab(ap_content[art_sel - 1][2])
+			print("OPENING THE ARTICLE IN YOUR BROWSER...\n")
+	elif (synfull == "2"):
+		webbrowser.open_new_tab(ap_content[art_sel - 1][3])
+		print("OPENING THE THUMBNAIL IN YOUR BROWSER...\n")
+		print("WOULD YOU LIKE TO VIEW THE FULL ARTICLE?\n\n1. YES\n2. NO\n")
+		fullthough = input()
+		if (fullthough == "1"):
+			webbrowser.open_new_tab(ap_content[art_sel - 1][2])
+			print("OPENING THE ARTICLE IN YOUR BROWSER...\n")
+	else:
+		webbrowser.open_new_tab(ap_content[art_sel - 1][2])
+		print("OPENING THE ARTICLE IN YOUR BROWSER...\n")
+
+##########
+
+def run_program():
+	# Prints the initial dialogue.
+	print("\n//////////////////////////////")
+	print("  WELCOME TO THE PARKFINDER")
+	print("//////////////////////////////\n")
+	print("WHAT WOULD YOU LIKE TO VIEW?\nPLEASE ENTER THE NUMBER OF THE OPTION YOU'D LIKE\n")
+	print("1. PARK INFORMATION")
+	print("2. NPS ARTICLES")
+	print("3. ALL PARKS' NAMES")
+	print("0. NOTHING -- QUIT\n")
+
+	##########
+
+	# Selection of program function -- runs individual functions from here.
+	picked = False
+	while (not picked):
+		opt = input()
+		if (opt == "1"):
+			state_in = run_parkfinder()
+			chosen_park = list_parks(state_in)
+			print("\n\n//////////////////////////////\nHERE IS THE INFORMATION FOR THAT PARK.\nYOU CAN READ MORE AT " + chosen_park.park_url + "\n//////////////////////////////\n")
+			print(chosen_park)
+			picked = True
+		elif (opt == "2"):
+			run_articlefinder()
+			picked = True
+		elif (opt == "3"):
+			for s in full_np_objects:
+				print(s.name)
+			picked = True
+		elif (opt == "0"):
+			picked = True
+			# Just stop running other functions to exit.
+		else:
+			print("COMMAND NOT RECOGNIZED.")
+
+
+	print("\nTHANK YOU FOR USING THE PARKFINDER!")
+
+
+# STEP FIVE -- RUN THE PROGRAM.
+run_program()
+
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
