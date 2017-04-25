@@ -251,10 +251,10 @@ See the submitted .zip for screenshots of the code running in all 3 modes, as we
 
 SI 206 Information
 ------------------
-Lines on which each of your data gathering functions begin: 56, 88, 131, 183
-Lines on which your class definitions begin: 181, 
+Lines on which each of your data gathering functions begin: 56, 88, 131, 206
+Lines on which your class definitions begin: 181, 359
 Line where your database is created in the program: 305
-Line of code that load data into your database: 324, 390
-Lines of code (approx) where your data processing code occurs — where in the file can we see all the processing techniques you used? 108-110, 147-165, 200 
-Lines of code that generate the output. 335-485
+Line of code that load data into your database: 193, 347, 449
+Lines of code (approx) where your data processing code occurs - where in the file can we see all the processing techniques you used? 108-110, 147-165, 223
+Lines of code that generate the output. 458-587
 
