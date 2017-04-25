@@ -98,8 +98,8 @@ Return Info:	N/A.
 Name:		build_weather_directory()
 Purpose:	Gets weather information for the states.
 Arguments:	None.
-Return Type:	List of tuples of strings
-Return Info:	Tuples contain state abbreviation, fahrenheit temp, and celcius temp.
+Return Type:	Dictionary of state names and temperatures (F and C)
+Return Info:	The key is the full name of the state, and the temperatures are in a tuple.
 --------------------------------
 Name:		state_db()
 Purpose:	Commits state/weather data to 206_final_data.db
@@ -251,6 +251,8 @@ Hohokam Pima is "not open to the public," and its page is inaccessible.
 It is listed in the database and printed list as [Unnamed Park], and its variables are all placeholders.
 
 Placeholder states ("[UNKNOWN STATE]") have the two-letter abbreviation UK in the database.
+
+In order to show the full program output, only some of the test results are shown. Despite this, all 18 tests pass, as running the program will show.
 
 See the submitted .zip for screenshots of the code running in all 3 modes, as well as proof of commits.
 

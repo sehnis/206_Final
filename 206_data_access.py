@@ -172,7 +172,6 @@ def build_weather_directory():
 	return all_weather
 
 bwd = build_weather_directory()
-print(bwd)
 
 def state_db():
 
@@ -588,6 +587,7 @@ run_program()
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
+# Test NationalPark member variables
 class TestParkVariables(unittest.TestCase):
 	def test_park_url(self):
 		url_test = NationalPark("https://www.nps.gov/hobe/")
@@ -613,7 +613,8 @@ class TestParkVariables(unittest.TestCase):
 	def test_park_planning(self):
 		planning_test = NationalPark("https://www.nps.gov/hobe/")
 		self.assertEqual(type(planning_test.planning), type("String about planning"), "Testing that the park's planning information is correctly created as a string.")
-	
+
+# Test NationalPark member functions
 class TestParkMembers(unittest.TestCase):
 	def test_short_print(self):
 		spr_test = NationalPark("https://www.nps.gov/hobe/")
@@ -622,6 +623,43 @@ class TestParkMembers(unittest.TestCase):
 		sph_test = NationalPark("https://www.nps.gov/hobe/")
 		self.assertEqual(type(sph_test.short_phone()), type("Printable string"), "Testing that short_phone returns a printable string.")
 
+# Test Article member variables
+class TestArticles(unittest.TestCase):
+	def test_article_title(self):
+		art_in = ("Example Article Title", "Example Synopsis", "Example URL", "Example Thumb")
+		art_test = Article(art_in)
+		self.assertEqual(art_test.title, "Example Article Title")
+	def test_article_synopsis(self):
+		art_in = ("Example Article Title", "Example Synopsis", "Example URL", "Example Thumb")
+		art_test = Article(art_in)
+		self.assertEqual(art_test.synopsis, "Example Synopsis")
+	def test_article_url(self):
+		art_in = ("Example Title", "Example Synopsis", "Example URL", "Example Thumb")
+		art_test = Article(art_in)
+		self.assertEqual(art_test.url, "Example URL")
+	def test_article_thumb(self):
+		art_in = ("Example Article Title", "Example Synopsis", "Example URL", "Example Thumb")
+		art_test = Article(art_in)
+		self.assertEqual(art_test.thumb, "Example Thumb")
+
+# Test directory generating functions
+class TestDirectories(unittest.TestCase):
+	def test_park_directory(self):
+		bpd = build_park_directory()
+		correct = []
+		self.assertEqual(type(bpd), type(correct))
+	def test_state_directory(self):
+		bsd = build_state_directory()
+		correct = []
+		self.assertEqual(type(bsd), type(correct))
+	def test_article_directory(self):
+		bad = build_state_directory()
+		correct = []
+		self.assertEqual(type(bad), type(correct))
+	def test_weather_directory(self):
+		bwd = build_weather_directory()
+		correct = {}
+		self.assertEqual(type(bwd), type(correct))
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
 
