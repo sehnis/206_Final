@@ -101,6 +101,12 @@ Arguments:	None.
 Return Type:	List of tuples of strings
 Return Info:	Tuples contain state abbreviation, fahrenheit temp, and celcius temp.
 --------------------------------
+Name:		state_db()
+Purpose:	Commits state/weather data to 206_final_data.db
+Arguments:	None.
+Return Type:	None.
+Return Info:	N/A.
+--------------------------------
 
 
 NationalPark Class 
