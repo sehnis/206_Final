@@ -106,7 +106,7 @@ Name:		__str__()
 Purpose:	Prints a full description of the park for the user to view.
 Arguments:	None.
 Return Type:	None, but prints to the console.
-Return Info:	Lists url, name, type, address, phone, and description.
+Return Info:	Lists url, name, type, address, phone, temperatures, and description.
 ------------------
 Name:		short_print()
 Purpose:	Gives a shortened description of the park.

@@ -46,6 +46,8 @@ except:
 	CACHE_DICTION = {}
 
 
+# PART ONE -- GETTING PARKS
+
 # BUILD STATE DIRECTORY -- The parks are divided by their state, so this collects the state information.
 
 	# There is a dropdown list on the index page, within which all of the state urls can be found.
@@ -120,7 +122,7 @@ def build_park_directory():
 	# When done iterating, return the master list of urls.
 	return all_parks
 
-# PART THREE -- STATES / WEATHER
+# PART TWO -- STATES / WEATHER
 
 # Huge dict of all of the states/territories that have parks.
 states_dict = {"Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "American Samoa": "AS", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Guam": "GU", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",  "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",  "Northern Mariana Islands": "MP", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",  "Oregon": "OR", "Pennsylvania": "PA", "Puerto Rico": "PR", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Virgin Islands": "VI", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"}
@@ -170,7 +172,7 @@ def build_weather_directory():
 	return all_weather
 
 bwd = build_weather_directory()
-print(bwd)
+
 # CREATE NATIONALPARK OBJECTS -- Use the state urls to initialize the states.
 	
 	# At this point, using BeautifulSoup on the park urls gets us all the information we need for the individual parks.
@@ -328,7 +330,7 @@ def update_db():
 	con.commit()
 
 
-# PART TWO -- ARTICLES
+# PART THREE -- ARTICLES
 
 def build_article_directory():
 
@@ -372,13 +374,13 @@ def build_article_directory():
 	return all_articles
 
 
+# ADD ARTICLE TABLE TO DATABASE
 ap_content = build_article_directory()
-
 def article_db():
-	# ADD ARTICLE TABLE TO DATABASE
+
+	# Create variables and commands relating to the database table.
 	con = sqlite3.connect("206_final_data.db")
 	cur = con.cursor()
-
 	cur.execute("DROP TABLE IF EXISTS Articles")
 	cur.execute("CREATE TABLE IF NOT EXISTS Articles (art_title TEXT PRIMARY KEY, art_info TEXT, art_url TEXT, art_thumb TEXT)")
 
@@ -391,12 +393,11 @@ def article_db():
 	con.commit()
 	con.close()
 
-
-##########
-
 # PART FOUR -- PROCESSING / PRINTING
 
+# List the individual pars for the state chosen, and return which one was chosen.
 def list_parks(state_abv):
+	# Get the parks whose mailing addresses are in the current state.
 	parks_in_state = []
 	for s in full_np_objects:
 		if state_abv in s.state_abvs:
@@ -404,13 +405,15 @@ def list_parks(state_abv):
 	print("HERE ARE ALL PARKS WITH ADDRESSES LISTED IN " + state_abv + ":")
 	print("WHICH ONE WOULD YOU LIKE TO KNOW MORE ABOUT?")
 	num = 1
+	# Show all of the options for parks.
 	for p in parks_in_state:
 		print(str(num) + ". " + p.name)
 		num += 1
 	choicepark = int(input())
+	# Return the correct NationalPark object.
 	return parks_in_state[choicepark - 1]
 
-
+# Guides the user through choosing a state.
 def run_parkfinder():
 	print("PLEASE ENTER THE TWO-LETTER ABBREVIATION OF THE STATE YOU'D LIKE TO VIEW PARKS FOR.")
 	print("IF YOU DO NOT KNOW YOUR STATE'S ABBREVIATION, ENTER \"HELP\" ")
@@ -420,19 +423,22 @@ def run_parkfinder():
 
 	while (not chosen):
 		choice = input()
-
+		# Runs the help option, printing all state abbreviations.
 		if (choice == "HELP" or choice == "Help" or choice == "help"):
 			for abv, ent in temp_state_dict:
 				print(abv + " is " + ent)
-		if choice in rev_states_dict:
+		# If the abbreviation is valid, returns that state.
+		elif choice in rev_states_dict:
 			print("YOU CHOSE " + rev_states_dict[choice])
 			return choice
 			chosen = True
-		elif (choice != "HELP" and choice != "Help" and choice != "help"):
+		# Otherwise, the command must be invalid.
+		else:
 			print("COMMAND NOT RECOGNIZED")
 
+# Guides the user through choosing and viewing an article
 def run_articlefinder():
-
+	# List the available articles, and have the user choose one.
 	print("WHICH ARTICLE WOULD YOU LIKE TO SEE?\n")
 	art_choice = 1
 	ap_too = build_article_directory()
@@ -441,9 +447,11 @@ def run_articlefinder():
 		art_choice += 1
 	art_sel = int(input())
 	print("\nYOU CHOSE: " + ap_content[art_sel - 1][0])
+	# Find what the user wants to view.
 	print("WOULD YOU LIKE A SYNOPSIS, THE THUMBNAIL, OR THE FULL ARTICLE?\n1. SYNOPSIS\n2. THUMBNAIL\n3. FULL ARTICLE\n")
 	synfull = input()
 	if (synfull == "1"):
+		# Show the synopsis, then show the full article if desired.
 		print(ap_content[art_sel - 1][1])
 		print("WOULD YOU LIKE TO VIEW THE FULL ARTICLE?\n\n1. YES\n2. NO\n")
 		fullthough = input()
@@ -451,6 +459,7 @@ def run_articlefinder():
 			webbrowser.open_new_tab(ap_content[art_sel - 1][2])
 			print("OPENING THE ARTICLE IN YOUR BROWSER...\n")
 	elif (synfull == "2"):
+		# Show the thumbnail in the default browser., then show the full article if desired.
 		webbrowser.open_new_tab(ap_content[art_sel - 1][3])
 		print("OPENING THE THUMBNAIL IN YOUR BROWSER...\n")
 		print("WOULD YOU LIKE TO VIEW THE FULL ARTICLE?\n\n1. YES\n2. NO\n")
@@ -459,11 +468,11 @@ def run_articlefinder():
 			webbrowser.open_new_tab(ap_content[art_sel - 1][2])
 			print("OPENING THE ARTICLE IN YOUR BROWSER...\n")
 	else:
+		# Open the article in the default browser.
 		webbrowser.open_new_tab(ap_content[art_sel - 1][2])
 		print("OPENING THE ARTICLE IN YOUR BROWSER...\n")
 
-##########
-
+# Handles the user's interaction with the program.
 def run_program():
 	# Prints the initial dialogue.
 	print("\n//////////////////////////////")
@@ -481,34 +490,41 @@ def run_program():
 	picked = False
 	while (not picked):
 		opt = input()
+		# When 1 is chosen, run the parkfinder set of functions.
 		if (opt == "1"):
 			state_in = run_parkfinder()
 			chosen_park = list_parks(state_in)
 			print("\n\n//////////////////////////////\nHERE IS THE INFORMATION FOR THAT PARK.\nYOU CAN READ MORE AT " + chosen_park.park_url + "\n//////////////////////////////\n")
 			print(chosen_park)
 			picked = True
+		# When 2 is chosen, run the articlefinder set of functions.
 		elif (opt == "2"):
 			run_articlefinder()
 			picked = True
+		# When 3 is chosen, just print all of the park objects' names.
 		elif (opt == "3"):
 			for s in full_np_objects:
 				print(s.name)
 			picked = True
+		# When 4 is chosen, escape the while loop.
 		elif (opt == "0"):
 			picked = True
-			# Just stop running other functions to exit.
+		# Otherwise, the input must have not been valid.
 		else:
 			print("COMMAND NOT RECOGNIZED.")
 
-
+	# Regardless of input, print a thank you message upon exiting.
 	print("\nTHANK YOU FOR USING THE PARKFINDER!\n")
 
 
-# STEP FIVE -- RUN THE PROGRAM.
+# PART FIVE -- RUNNING THE PROGRAM.
+# Create the park info and commit it to the database if not done already.
+# Weather data created automatically.
 update_db()
+# Create the article info and commit it to the database if not done already.
 article_db()
+# Run the program by handling user input.
 run_program()
-
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
