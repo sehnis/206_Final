@@ -1,8 +1,8 @@
-*PARKFINDER*
-===================
+PARKFINDER
+============
 
-*SI206 Final Project by Sam Ehnis-Clark [sehnis]*
--------------------------------------------------
+SI206 Final Project by Sam Ehnis-Clark [sehnis]
+-----------------------------------------------
 
 Usage
 -----
@@ -52,6 +52,12 @@ Purpose:	Uses state URLs to get all park URLs.
 Arguments:	None, but calls build_state_directory() internally.
 Return Type:	List of strings.
 Return Info:	URLS, formatted like https://www.nps.gov/frst/
+--------------------------------
+Name:		update_db()
+Purpose:	Commits park data to 206_final_data.db
+Arguments:	None.
+Return Type:	None.
+Return Info:	N/A.
 --------------------------------
 Name:		build_article_directory()
 Purpose:	Gets the information of the articles on the NPS index page.
