@@ -227,44 +227,45 @@ class NationalPark():
 			to_print = "There is no phone number available, but you can find more information at the park website: " + self.url
 		return to_print
 
-# Create a list of NationalPark objects.
-all_urls = build_park_directory()
-full_np_objects = []
+def update_db():
+	# Create a list of NationalPark objects.
+	all_urls = build_park_directory()
+	full_np_objects = []
 
-# Insert the NationalPark objects into a giant list.
-for parks_per_state in all_urls:
-	for individual_park in parks_per_state:
-		full_np_objects.append(NationalPark(individual_park))
+	# Insert the NationalPark objects into a giant list.
+	for parks_per_state in all_urls:
+		for individual_park in parks_per_state:
+			full_np_objects.append(NationalPark(individual_park))
 
-# DATABASE CREATION
+	# DATABASE CREATION
 
-# Create the database connection and cursor.
-con = sqlite3.connect("206_final_data.db")
-cur = con.cursor()
+	# Create the database connection and cursor.
+	con = sqlite3.connect("206_final_data.db")
+	cur = con.cursor()
 
-# Clear out any existing tables and create a new one.
-cur.execute("DROP TABLE IF EXISTS Parks")
-cur.execute("CREATE TABLE IF NOT EXISTS Parks (park_name TEXT PRIMARY KEY, park_info TEXT, park_url TEXT, park_phone TEXT, park_states TEXT, park_address TEXT)")
+	# Clear out any existing tables and create a new one.
+	cur.execute("DROP TABLE IF EXISTS Parks")
+	cur.execute("CREATE TABLE IF NOT EXISTS Parks (park_name TEXT PRIMARY KEY, park_info TEXT, park_url TEXT, park_phone TEXT, park_states TEXT, park_address TEXT)")
 
-# Populate the table based on the list of NationalPark objects created.
-np_base = "INSERT OR IGNORE INTO Parks VALUES (?, ?, ?, ?, ?, ?)"
-for np in full_np_objects:
-	try:
-		# Get member variables, and condense them into a tuple to be entered into the table.
-		p_name = np.name
-		p_info = np.short_print()
-		p_url = np.park_url
-		p_phone = np.phone
-		p_states = np.states
-		p_address = np.address
-		p_entry = (p_name, p_info, p_url, p_phone, p_states, p_address)
-		cur.execute(np_base, p_entry)
-	except:
-		# Error handling should make it so this isn't needed, but this helps with severely broken entries.
-		pass
+	# Populate the table based on the list of NationalPark objects created.
+	np_base = "INSERT OR IGNORE INTO Parks VALUES (?, ?, ?, ?, ?, ?)"
+	for np in full_np_objects:
+		try:
+			# Get member variables, and condense them into a tuple to be entered into the table.
+			p_name = np.name
+			p_info = np.short_print()
+			p_url = np.park_url
+			p_phone = np.phone
+			p_states = np.states
+			p_address = np.address
+			p_entry = (p_name, p_info, p_url, p_phone, p_states, p_address)
+			cur.execute(np_base, p_entry)
+		except:
+			# Error handling should make it so this isn't needed, but this helps with severely broken entries.
+			pass
 
-# Commit the changes to the database.
-con.commit()
+	# Commit the changes to the database.
+	con.commit()
 
 
 # PART TWO -- ARTICLES
@@ -310,19 +311,20 @@ def build_article_directory():
 
 	return all_articles
 
-# ADD ARTICLE TABLE TO DATABASE
-cur.execute("DROP TABLE IF EXISTS Articles")
-cur.execute("CREATE TABLE IF NOT EXISTS Articles (art_title TEXT PRIMARY KEY, art_info TEXT, art_url TEXT, art_thumb TEXT)")
+def article_db():
+	# ADD ARTICLE TABLE TO DATABASE
+	cur.execute("DROP TABLE IF EXISTS Articles")
+	cur.execute("CREATE TABLE IF NOT EXISTS Articles (art_title TEXT PRIMARY KEY, art_info TEXT, art_url TEXT, art_thumb TEXT)")
 
-# Populate the table based on the list of Article objects created.
-ap_base = "INSERT OR IGNORE INTO Articles VALUES (?, ?, ?, ?)"
-ap_content = build_article_directory()
-for ap in ap_content:
-	cur.execute(ap_base, ap)
+	# Populate the table based on the list of Article objects created.
+	ap_base = "INSERT OR IGNORE INTO Articles VALUES (?, ?, ?, ?)"
+	ap_content = build_article_directory()
+	for ap in ap_content:
+		cur.execute(ap_base, ap)
 
-# Commit this table, and close the whole database.
-con.commit()
-con.close()
+	# Commit this table, and close the whole database.
+	con.commit()
+	con.close()
 
 
 # PART THREE -- STATES / WEATHER
@@ -481,10 +483,12 @@ def run_program():
 			print("COMMAND NOT RECOGNIZED.")
 
 
-	print("\nTHANK YOU FOR USING THE PARKFINDER!")
+	print("\nTHANK YOU FOR USING THE PARKFINDER!\n")
 
 
 # STEP FIVE -- RUN THE PROGRAM.
+update_db()
+article_db()
 run_program()
 
 
