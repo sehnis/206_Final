@@ -29,7 +29,7 @@ The program is contained entirely within the data_access file, but imports a num
 	- unittest (Testing)
 	- webbrowser (Opening articles)
 
-Usage: python 206_data_access.py
+Usage: python parkfinder.py
 
 The program prompts the user for input on which functionality to use.
 Several options lead to further choices, as the user will see.
