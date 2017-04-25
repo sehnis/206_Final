@@ -125,7 +125,7 @@ def build_park_directory():
 # PART TWO -- STATES / WEATHER
 
 # Huge dict of all of the states/territories that have parks.
-states_dict = {"Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "American Samoa": "AS", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Guam": "GU", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",  "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",  "Northern Mariana Islands": "MP", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",  "Oregon": "OR", "Pennsylvania": "PA", "Puerto Rico": "PR", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Virgin Islands": "VI", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"}
+states_dict = {"Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "American Samoa": "AS", "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC", "Florida": "FL", "Georgia": "GA", "Guam": "GU", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",  "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",  "Northern Mariana Islands": "MP", "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH",  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",  "Oregon": "OR", "Pennsylvania": "PA", "Puerto Rico": "PR", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Virgin Islands": "VI", "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY", "[UNKNOWN STATE]" : "UK"}
 rev_states_dict= {"AL" : "Alabama", "AK": "Alaska", "AZ" : "Arizona", "AR" : "Arkansas", "AS" : "American Samoa", "CA" : "California", "CO" :  "Colorado", "CT" : "Connecticut", "DE" : "Delaware", "DC" : "District of Columbia", "FL" : "Florida", "GA" : "Georgia", "GU" : "Guam", "HI": "Hawaii", "ID" : "Idaho", "IL" : "Illinois", "IN" : "Indiana", "IA" : "Iowa", "KS" : "Kansas", "KY" : "Kentucky", "LA" : "Louisiana", "ME" : "Maine", "MD" : "Maryland", "MA" : "Massachusetts", "MI" : "Michigan", "MN" :  "Minnesota", "MP" : "Northern Mariana Islands", "MS" : "Mississippi", "MO" : "Missouri", "MT" : "Montana", "NE" : "Nebraska", "NV" : "Nevada", "NH" : "New Hampshire", "NJ" : "New Jersey", "NM" : "New Mexico", "NY" : "New York", "NC" :  "North Carolina", "ND" : "North Dakota", "OH" : "Ohio", "OK" : "Oklahoma", "OR" : "Oregon", "PA" : "Pennsylvania", "PR" : "Puerto Rico", "RI" : "Rhode Island", "SC" : "South Carolina", "SD" : "South Dakota", "TN" : "Tennessee", "TX" : "Texas", "UT" : "Utah", "VI" : "Virgin Islands", "VT" : "Vermont", "VA" : "Virginia", "WA" : "Washington", "WV" : "West Virginia", "WI" : "Wisconsin", "WY" : "Wyoming"}
 
 def build_weather_directory():
@@ -172,6 +172,29 @@ def build_weather_directory():
 	return all_weather
 
 bwd = build_weather_directory()
+print(bwd)
+
+def state_db():
+
+	# Create variables and commands relating to the database table.
+	con = sqlite3.connect("206_final_data.db")
+	cur = con.cursor()
+	cur.execute("DROP TABLE IF EXISTS States")
+	cur.execute("CREATE TABLE IF NOT EXISTS States (state_name TEXT PRIMARY KEY, state_abv TEXT, weather_degf TEXT, weather_degc TEXT)")
+
+	# Turn state information into a tuple, for insertion into the table.
+	state_tups = []
+	for b in bwd:
+		state_tups.append((b, states_dict[b], bwd[b][0], bwd[b][0]))
+
+	# Populate the table based on the list of Article objects created.
+	state_base = "INSERT OR IGNORE INTO States VALUES (?, ?, ?, ?)"
+	for tup in state_tups:
+		cur.execute(state_base, tup)
+
+	# Commit this table, and close the whole database.
+	con.commit()
+	con.close()
 
 # CREATE NATIONALPARK OBJECTS -- Use the state urls to initialize the states.
 	
@@ -332,6 +355,37 @@ def update_db():
 
 # PART THREE -- ARTICLES
 
+# Declare the article class
+class Article():
+
+	def __init__(self, art_input):
+
+		# Recreating all of this information every time the program is run would take forever,
+		# so caching is used as it was before (large cache file, but more reasonable requests.)
+		dict_key = art_input[0] + "_data"
+
+		if dict_key in CACHE_DICTION:
+			# Data is stored as a dictionary in the cache, so retrieve it if it was already found.
+			self.title = CACHE_DICTION[dict_key]["ti"]
+			self.synopsis = CACHE_DICTION[dict_key]["s"]
+			self.url = CACHE_DICTION[dict_key]["u"]
+			self.thumb = CACHE_DICTION[dict_key]["th"]
+		else:
+			# Otherwise, build it from the inputted tuple.
+			# BeautifulSoup is handled directly outside of the article creation.
+			self.title = art_input[0]
+			self.synopsis = art_input[1]
+			self.url = art_input[2]
+			self.thumb = art_input[3]
+
+			self.full_dict = {"ti" : self.title, "s" : self.synopsis, "u" : self.url, "th" : self.thumb}
+			CACHE_DICTION[dict_key] = self.full_dict
+			f = open(CACHE_FILENAME, "w")
+			f.write(json.dumps(CACHE_DICTION))
+			f.close()
+
+# Get all the articles, and build article objects.
+article_objects = []
 def build_article_directory():
 
 	all_articles = []
@@ -366,6 +420,11 @@ def build_article_directory():
 			art_full = (art_title, art_info, art_url, art_thumb)
 			all_articles.append(art_full)
 
+		# Create and append the article objects to a list.
+		for each in all_articles:
+			article_objects.append(Article(each))
+
+		# Update the cache.
 		CACHE_DICTION["article_data"] = all_articles
 		f = open(CACHE_FILENAME, "w")
 		f.write(json.dumps(CACHE_DICTION))
@@ -519,8 +578,9 @@ def run_program():
 
 # PART FIVE -- RUNNING THE PROGRAM.
 # Create the park info and commit it to the database if not done already.
-# Weather data created automatically.
 update_db()
+# Create the state info and commit it to the database if not done already.
+state_db()
 # Create the article info and commit it to the database if not done already.
 article_db()
 # Run the program by handling user input.

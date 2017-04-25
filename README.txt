@@ -4,13 +4,35 @@ PARKFINDER
 SI206 Final Project by Sam Ehnis-Clark [sehnis]
 -----------------------------------------------
 
-Usage
------
-python 206_data_access.py
+General Information
+-------------------
+
+Option 1 (Though the printed information is varied from the spec)
+
+The program has three functionalities:
+	- It can show users park info, based on a chosen state and park.
+	- It can show users articles, and open them in their browser.
+	- It can list all of the parks on the NPS website.
+It's main purpose is the first option, which guides them through choosing a park
+and presents information on many aspects of the park, such as contact info, weather,
+and the type of park that it is.
+
+The program is contained entirely within the data_access file, but imports a number of libraries:
+	- from bs4 import BeautifulSoup (HTML parsing)
+	- codecs (UTF-8 compatibility)
+	- collections (Data processing)
+	- json (HTML parsing)
+	- re (Data processing, specifically on addresses)
+	- requests (HTML parsing)
+	- sqlite3 (Database storage)
+	- sys (Permissions)
+	- unittest (Testing)
+	- webbrowser (Opening articles)
+
+Usage: python 206_data_access.py
 
 The program prompts the user for input on which functionality to use.
 Several options lead to further choices, as the user will see.
-
 The tree of choices is as follows:
 
 1. See park information
@@ -80,6 +102,7 @@ Return Type:	List of tuples of strings
 Return Info:	Tuples contain state abbreviation, fahrenheit temp, and celcius temp.
 --------------------------------
 
+
 NationalPark Class 
 ------------------
 Variables
@@ -122,6 +145,26 @@ Return Info:	Lists the park's phone number or URL, with a helpful message.
 ------------------
 
 
+Article Class 
+-------------
+Variables
+---------
+title		Title of the article.
+synopsis	The synopsis given below the article's thumbnail
+url		URL of the article
+thumb		Thumbnail URL for the article
+
+Methods
+-------
+Name:		__init__(art_input)
+Purpose:	Initializes a Article object from a tuple of BeautiulSoup data
+Note:		Handled within create_article_directory, which uses article URLs
+Arguments:	1 tuple of 4 strings
+Return Type:	None.
+Return Info:	The created Article object has 4 variables, as mentioned above.
+-------------
+
+
 Lookup/User Functions
 ---------------------
 Name:		list_parks(state_abv)
@@ -147,3 +190,71 @@ Purpose:	Prints the initial message, and gets the user's decision.
 Arguments:	None.
 Return Type:	None, but prints to the console.
 Return Info:	Prints a "thank you" message at the end, regardless of option.
+
+
+Database Content
+----------------
+Table One: Articles
+Column Name   	|   Column Type	|   Column Content
+art_title	|   string	|   Lists the article's title
+art_info	|   string	|   Lists the article's synopsis
+art_url		|   string	|   Lists the article's URL
+art_thumb	|   string	|   Lists the URL of the article's thumbnail
+----------------
+Table Two: Parks
+Column Name   	|   Column Type	|   Column Content
+park_name	|   string	|   Lists the park's name
+park_info	|   string	|   Lists the park's contact info as a synopsis
+park_url	|   string	|   Lists the park's URL
+park_phone	|   string	|   Lists the park's phone number
+park_states	|   string	|   Lists the states that the park is in
+park_address	|   string	|   Lists the park's mailing address
+----------------
+Table Three: States
+Column Name   	|   Column Type	|   Column Content
+state_name	|   string	|   Lists the state's full name
+state_abv	|   string	|   Lists the state's abbreviation
+weather_degf	|   string	|   Lists the temperature in fahrenheit
+weather_degc	|   string	|   Lists the temperature in celsius
+
+
+Data Manipulation Questions
+---------------------------
+What else does the code do?
+	- Allows for the user to choose what information they see of all this.
+How is it useful?
+	- Gives a practical application to the collected data: researching parks relevant to the user.
+What will it show you?
+	- Depends on the user's choice; it will show park info, articles, or general park listings.
+What should a user expect?
+	- To find parks in their area, and get a good deal of information about them.
+
+
+Why I Chose This
+----------------
+
+I consider this to be a blend of Options 1 and 3 -- when I started parsing through all of the data that this program was generating, I thought it would be useful to have it return a consise amount of facts about each of the parks in a practical way that gave the user information relevant to them. As such, it expounds upon the Option 1 concept of using National Parks and presents the user with a varied yet very practical set of park/article information.
+
+
+Extra Notes
+-----------
+
+To handle the dilemma of parks spanning multiple states, a park is only listed as being in a state if its mailing address is listed in that state.
+
+Hohokam Pima is "not open to the public," and its page is inaccessible.
+It is listed in the database and printed list as [Unnamed Park], and its variables are all placeholders.
+
+Placeholder states ("[UNKNOWN STATE]") have the two-letter abbreviation UK in the database.
+
+See the submitted .zip for screenshots of the code running in all 3 modes, as well as proof of commits.
+
+
+SI 206 Information
+------------------
+Lines on which each of your data gathering functions begin: 56, 88, 131, 183
+Lines on which your class definitions begin: 181, 
+Line where your database is created in the program: 305
+Line of code that load data into your database: 324, 390
+Lines of code (approx) where your data processing code occurs — where in the file can we see all the processing techniques you used? 108-110, 147-165, 200 
+Lines of code that generate the output. 335-485
+
