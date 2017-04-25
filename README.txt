@@ -1,5 +1,5 @@
 PARKFINDER
-============
+==========
 
 SI206 Final Project by Sam Ehnis-Clark [sehnis]
 -----------------------------------------------
@@ -20,7 +20,7 @@ The tree of choices is as follows:
 	2. See all abbreviations
 		* State abbreviations are printed, user is reprompted for input
 2. See article information
-	1. Choose article from list of all articles
+	1 - N. Choose article from list of all articles
 		1. View the synopsys
 			* Synopsis is printed 
 			1. View the full article
