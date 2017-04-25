@@ -108,7 +108,7 @@ def build_park_directory():
 			found_urls = ["https://www.nps.gov" + raw for raw in raw_urls]
 
 			# Add the list of found urls to the overarching list of park urls.
-			all_parks.append((state, found_urls))
+			all_parks.append(found_urls)
 
 		# If the program hit this else loop, then the cache doesn't exist and needs to be made like this.
 		# This should save a considerable amount of time instead of rescraping every time.
@@ -145,13 +145,14 @@ def build_weather_directory():
 		for forecast in weather_table:
 			all_states = forecast.find_all("tr")
 			for state in all_states:
-				for sta in state.find_all("td"):
+				sfa = state.find_all("td")
+				for sta in sfa:
 					state_forecast.append(sta.text) 
 				# Load information 
 				try:
-					state_weather = state_forecast[0]
-					state_fahrenheit = state_forecast[1]
-					state_celcius = state_forecast[2]
+					state_weather = sfa[0].text
+					state_fahrenheit = sfa[1].text
+					state_celcius = sfa[2].text
 				except:
 					state_weather = "[UNKNOWN STATE]"
 					state_fahrenheit = "[TEMP UNKNOWN]"
@@ -194,7 +195,7 @@ class NationalPark():
 			self.phone = CACHE_DICTION[dict_key]["ph"]
 			self.planning = CACHE_DICTION[dict_key]["pl"]
 			self.has_phone = CACHE_DICTION[dict_key]["hf"]
-			self.state_abvs = re.findall('[A-Z]{2}', self.address)
+			self.state_abvs = list(re.findall('[A-Z]{2}', self.address))
 		else:
 
 			# As before, scrape the supplied url.
@@ -231,7 +232,7 @@ class NationalPark():
 				self.phone = "[Phone Unavailable]"
 				self.has_phone = False
 
-			self.state_abvs = re.findall('[A-Z]{2}', self.address)
+			self.state_abvs = list(re.findall('[A-Z]{2}', self.address))
 
 			# Different parks have varying levels of information for safety/accomodations.
 			# This program is currently just saving the text on the "plan your visit" page.
@@ -260,13 +261,12 @@ class NationalPark():
 		else :
 			to_print += ", but do not have a phone number listed.\n\n"
 		temps = ("?", "?")
-		for abv in self.state_abvs:
-			for w in bwd:
-				# print(w[0])
-				if (abv == w[0]):
-					temps = (bwd[abv][1], bwd[abv][2])
-		to_print += "The expected forecast is " + temps[0] + " degrees F, or " + temps[1] + " degrees C.\n"
-		
+		full_state = rev_states_dict[self.state_abvs[0]]
+		for w in bwd:
+			# print(w[0])
+			if (full_state == w):
+				temps = (bwd[w][0], bwd[w][1])
+		to_print += "The expected forecast is " + temps[0] + " degrees F, or " + temps[1] + " degrees C.\n\n"
 		to_print += "Here is some important information about " + self.name + ":\n" + self.planning + "\n\n"
 		to_print += "----------------------------------------"
 		to_print.encode("utf-8")
